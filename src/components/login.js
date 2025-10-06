@@ -2,14 +2,21 @@
 import React, { useState } from "react";
 import { auth, googleProvider } from "../firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import Signup from "./Signup";
+import "./login.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [isSignup, setIsSignup] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!email.toLowerCase().endsWith("@sece.ac.in")) {
+      setError("Please use your @sece.ac.in email address");
+      return;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
@@ -25,47 +32,58 @@ const Login = () => {
     }
   };
 
+  if (isSignup) {
+    return <Signup onBackToLogin={() => setIsSignup(false)} />;
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 to-blue-900">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md"
-      >
-        <h2 className="text-3xl font-bold text-blue-700 text-center mb-6">
-          Grievance Cell Login
-        </h2>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border border-blue-200 rounded-md p-3 mb-4 w-full focus:outline-none focus:border-blue-700 text-base"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border border-blue-200 rounded-md p-3 mb-4 w-full focus:outline-none focus:border-blue-700 text-base"
-        />
-        <button
-          type="submit"
-          className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 w-full rounded-md text-lg transition-colors mb-4"
-        >
-          Login
+    <div className="login-container">
+      <form onSubmit={handleLogin} className="login-card">
+        <h2 className="login-title">Secure Login</h2>
+        <p className="login-subtitle">Access the Centralized Grievance Cell</p>
+        <div className="form-group">
+          <input
+            type="email"
+            placeholder="yourname@sece.ac.in"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="form-input"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            placeholder="Password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="form-input"
+            minLength="6"
+            required
+          />
+        </div>
+        <button type="submit" className="login-button">
+          Log In
         </button>
-        <div className="flex items-center mb-4">
-          <div className="flex-grow h-px bg-blue-200"></div>
-          <span className="mx-2 text-blue-400 font-semibold">or</span>
-          <div className="flex-grow h-px bg-blue-200"></div>
+        <button
+          type="button"
+          onClick={() => setIsSignup(true)}
+          className="signup-link"
+        >
+          New Complainant? Sign Up Here
+        </button>
+        <div className="divider">
+          <div className="divider-line"></div>
+          <span className="divider-text">or</span>
+          <div className="divider-line"></div>
         </div>
         <button
           type="button"
           onClick={handleGoogleSignIn}
-          className="flex items-center justify-center gap-2 bg-white border border-blue-400 text-blue-700 font-bold py-3 w-full rounded-md text-lg shadow hover:bg-blue-50 transition-colors"
+          className="google-button"
         >
           <svg
-            className="w-6 h-6"
+            className="google-icon"
             viewBox="0 0 48 48"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +114,7 @@ const Login = () => {
           </svg>
           Sign in with Google
         </button>
-        {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
       </form>
     </div>
   );
