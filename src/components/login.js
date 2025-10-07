@@ -1,7 +1,8 @@
 // Login component using Firebase Auth
 import React, { useState } from "react";
-import { auth, googleProvider } from "../firebase";
+import { auth, googleProvider, db } from "../firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import Signup from "./Signup";
 import "./login.css";
 
@@ -10,23 +11,92 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSignup, setIsSignup] = useState(false);
+  const [loginMode, setLoginMode] = useState("student"); // "student" or "admin"
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email.toLowerCase().endsWith("@sece.ac.in")) {
-      setError("Please use your @sece.ac.in email address");
-      return;
+    setError(null);
+    
+    // Admin login validation
+    if (loginMode === "admin") {
+      if (!email.toLowerCase().includes("admin")) {
+        setError("Admin accounts must contain 'admin' in the email (e.g., admin@sece.ac.in)");
+        return;
+      }
+    } else {
+      // Student login validation
+      if (!email.toLowerCase().endsWith("@sece.ac.in")) {
+        setError("Please use your @sece.ac.in email address");
+        return;
+      }
     }
+    
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      console.log("Attempting login as:", loginMode);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("Login successful for:", user.email);
+      
+      // Store/update user role in Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create user document with role
+        console.log("Creating new user document with role:", loginMode);
+        await setDoc(userRef, {
+          email: user.email,
+          role: loginMode,
+          createdAt: new Date(),
+        });
+        console.log("User document created successfully");
+      } else {
+        // Verify role matches
+        const userData = userDoc.data();
+        console.log("Existing user role:", userData.role, "Login mode:", loginMode);
+        if (userData.role !== loginMode) {
+          await auth.signOut();
+          setError(`This account is registered as ${userData.role}. Please select the correct login type.`);
+          return;
+        }
+      }
     } catch (err) {
-      setError(err.message);
+      console.error("Login error:", err);
+      if (err.code === "auth/user-not-found") {
+        setError("No account found with this email. Please sign up first.");
+      } else if (err.code === "auth/wrong-password") {
+        setError("Incorrect password. Please try again.");
+      } else {
+        setError(err.message);
+      }
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      const user = userCredential.user;
+      
+      // Store/update user role in Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create user document with role
+        await setDoc(userRef, {
+          email: user.email,
+          role: loginMode,
+          createdAt: new Date(),
+        });
+      } else {
+        // Verify role matches
+        const userData = userDoc.data();
+        if (userData.role !== loginMode) {
+          await auth.signOut();
+          setError(`This account is registered as ${userData.role}. Please select the correct login type.`);
+          return;
+        }
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -39,8 +109,26 @@ const Login = () => {
   return (
     <div className="login-container">
       <form onSubmit={handleLogin} className="login-card">
-        <h2 className="login-title">Secure Login</h2>
-        <p className="login-subtitle">Access the Centralized Grievance Cell</p>
+        <h2 className="login-title">🎓 Grievance Cell</h2>
+        <p className="login-subtitle">Sri Eshwar College of Engineering</p>
+        
+        {/* Role Selection */}
+        <div className="role-selector">
+          <button
+            type="button"
+            className={`role-button ${loginMode === "student" ? "active" : ""}`}
+            onClick={() => setLoginMode("student")}
+          >
+            👨‍🎓 Student Login
+          </button>
+          <button
+            type="button"
+            className={`role-button ${loginMode === "admin" ? "active" : ""}`}
+            onClick={() => setLoginMode("admin")}
+          >
+            👨‍💼 Admin Login
+          </button>
+        </div>
         <div className="form-group">
           <input
             type="email"
