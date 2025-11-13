@@ -11,11 +11,17 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { auth } from "../firebase";
+import { useTranslation } from "../hooks/useTranslation";
+import TranslatedText from "./TranslatedText";
+import SpeakButton from "./SpeakButton";
+import TranslatedTextWithSpeech from "./TranslatedTextWithSpeech";
+import TextToSpeech from "./TextToSpeech";
 import "./Dashboard.css";
 import "./AdminDashboard.css";
 
 const AdminDashboard = ({ user }) => {
   console.log("🚀 AdminDashboard component loaded for user:", user?.email);
+  const { t } = useTranslation();
   
   const [grievances, setGrievances] = useState([]);
   const [filteredGrievances, setFilteredGrievances] = useState([]);
@@ -168,19 +174,22 @@ const AdminDashboard = ({ user }) => {
 
     return (
       <div className="dashboard-content">
-        <h2 className="page-title">Admin Dashboard Overview</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <h2 className="page-title" style={{ margin: 0 }}>{t('dashboard')} {t('statistics')}</h2>
+          <TextToSpeech text={`${t('dashboard')} ${t('statistics')}`} />
+        </div>
         
         <div className="stats-grid">
           <div className="stat-card admin-stat-total">
             <div className="stat-info">
-              <h3>Total Grievances</h3>
+              <h3>{t('all_complaints')}</h3>
               <div className="stat-value">{stats.total}</div>
             </div>
             <div className="stat-icon">📊</div>
           </div>
           <div className="stat-card admin-stat-pending">
             <div className="stat-info">
-              <h3>Pending</h3>
+              <h3>{t('pending')}</h3>
               <div className="stat-value" style={{ color: "#f59e0b" }}>
                 {stats.pending}
               </div>
@@ -189,7 +198,7 @@ const AdminDashboard = ({ user }) => {
           </div>
           <div className="stat-card admin-stat-progress">
             <div className="stat-info">
-              <h3>In Progress</h3>
+              <h3>{t('in_progress')}</h3>
               <div className="stat-value" style={{ color: "#3b82f6" }}>
                 {stats.inProgress}
               </div>
@@ -198,7 +207,7 @@ const AdminDashboard = ({ user }) => {
           </div>
           <div className="stat-card admin-stat-resolved">
             <div className="stat-info">
-              <h3>Resolved</h3>
+              <h3>{t('resolved')}</h3>
               <div className="stat-value" style={{ color: "#22c55e" }}>
                 {stats.resolved}
               </div>
@@ -276,13 +285,16 @@ const AdminDashboard = ({ user }) => {
   const renderAllGrievances = () => (
     <div className="grievances-list">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <h2 className="page-title">All Grievances ({filteredGrievances.length})</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 className="page-title" style={{ margin: 0 }}>{t('all_complaints')} ({filteredGrievances.length})</h2>
+          <TextToSpeech text={t('all_complaints')} />
+        </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button onClick={exportToCSV} className="action-btn export-btn">
-            📥 Export CSV
+            📥 {t('export') || 'Export CSV'}
           </button>
           <button onClick={() => window.location.reload()} className="action-btn refresh-btn">
-            🔄 Refresh
+            🔄 {t('loading')}
           </button>
         </div>
       </div>
@@ -319,12 +331,12 @@ const AdminDashboard = ({ user }) => {
       <div className="grievance-table">
         <div className="table-header" style={{ gridTemplateColumns: "100px 1.5fr 1fr 1fr 1fr 150px 120px" }}>
           <div>ID</div>
-          <div>Title</div>
-          <div>Student</div>
-          <div>Category</div>
-          <div>Submitted On</div>
-          <div>Status</div>
-          <div>Actions</div>
+          <div>{t('title')}</div>
+          <div>{t('student') || 'Student'}</div>
+          <div>{t('category')}</div>
+          <div>{t('date')}</div>
+          <div>{t('status')}</div>
+          <div>{t('actions') || 'Actions'}</div>
         </div>
         {filteredGrievances.length === 0 ? (
           <div className="empty-state">
@@ -337,11 +349,16 @@ const AdminDashboard = ({ user }) => {
           filteredGrievances.map((g) => (
             <div key={g.id} className="table-row" style={{ gridTemplateColumns: "100px 1.5fr 1fr 1fr 1fr 150px 120px" }}>
               <div>GR-{g.id.substring(0, 4)}</div>
-              <div className="grievance-title-cell" onClick={() => viewDetails(g)} style={{ cursor: "pointer", color: "#3b82f6" }}>
-                {g.title}
+              <div className="grievance-title-cell">
+                <TranslatedTextWithSpeech 
+                  text={g.title}
+                  as="span"
+                  onClick={() => viewDetails(g)}
+                  style={{ cursor: "pointer", color: "#3b82f6" }}
+                />
               </div>
               <div>{g.student_name}</div>
-              <div>{g.category}</div>
+              <div><TranslatedText text={g.category} /></div>
               <div>{g.created_at?.toDate ? g.created_at.toDate().toLocaleDateString() : "-"}</div>
               <div>
                 <select
@@ -349,10 +366,10 @@ const AdminDashboard = ({ user }) => {
                   onChange={(e) => updateStatus(g.id, e.target.value)}
                   className="status-select"
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Escalated">Escalated</option>
+                  <option value="Pending">{t('pending')}</option>
+                  <option value="In Progress">{t('in_progress')}</option>
+                  <option value="Resolved">{t('resolved')}</option>
+                  <option value="Escalated">{t('escalated') || 'Escalated'}</option>
                 </select>
               </div>
               <div className="action-buttons">
@@ -377,7 +394,10 @@ const AdminDashboard = ({ user }) => {
       <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h2>Grievance Details</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2>{t('details') || 'Grievance Details'}</h2>
+              <TextToSpeech text={`${t(selectedGrievance.title)}. ${t(selectedGrievance.description)}`} />
+            </div>
             <button className="modal-close" onClick={() => setShowDetailModal(false)}>×</button>
           </div>
           <div className="modal-body">
@@ -386,19 +406,25 @@ const AdminDashboard = ({ user }) => {
               <span className="detail-value">GR-{selectedGrievance.id.substring(0, 8)}</span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">Title:</span>
-              <span className="detail-value">{selectedGrievance.title}</span>
+              <span className="detail-label">{t('title')}:</span>
+              <span className="detail-value">
+                <TranslatedText text={selectedGrievance.title} />
+              </span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">Description:</span>
-              <span className="detail-value">{selectedGrievance.description}</span>
+              <span className="detail-label">{t('description')}:</span>
+              <span className="detail-value">
+                <TranslatedText text={selectedGrievance.description} />
+              </span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">Category:</span>
-              <span className="detail-value">{selectedGrievance.category}</span>
+              <span className="detail-label">{t('category')}:</span>
+              <span className="detail-value">
+                <TranslatedText text={selectedGrievance.category} />
+              </span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">Student:</span>
+              <span className="detail-label">{t('student') || 'Student'}:</span>
               <span className="detail-value">{selectedGrievance.student_name}</span>
             </div>
             <div className="detail-row">

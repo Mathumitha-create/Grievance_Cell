@@ -7,26 +7,34 @@ import Signup from "./Signup";
 import "./login.css";
 
 const Login = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSignup, setIsSignup] = useState(false);
-  const [loginMode, setLoginMode] = useState("student"); // "student" or "admin"
+  const [loginMode, setLoginMode] = useState("student"); // "student", "warden", "faculty", "hod", "admin"
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
     
-    // Admin login validation
-    if (loginMode === "admin") {
-      if (!email.toLowerCase().includes("admin")) {
-        setError("Admin accounts must contain 'admin' in the email (e.g., admin@sece.ac.in)");
-        return;
-      }
-    } else {
-      // Student login validation
-      if (!email.toLowerCase().endsWith("@sece.ac.in")) {
-        setError("Please use your @sece.ac.in email address");
+    // Email validation based on role
+    if (!email.toLowerCase().endsWith("@sece.ac.in")) {
+      setError("Please use your @sece.ac.in email address");
+      return;
+    }
+    
+    // Role-specific email validation
+    const roleKeywords = {
+      admin: 'admin',
+      warden: 'warden',
+      faculty: 'faculty',
+      hod: 'hod'
+    };
+    
+    if (loginMode !== "student" && roleKeywords[loginMode]) {
+      if (!email.toLowerCase().includes(roleKeywords[loginMode])) {
+        setError(`${loginMode.charAt(0).toUpperCase() + loginMode.slice(1)} accounts must contain '${roleKeywords[loginMode]}' in the email`);
         return;
       }
     }
@@ -42,23 +50,20 @@ const Login = () => {
       const userDoc = await getDoc(userRef);
       
       if (!userDoc.exists()) {
-        // Create user document with role
+        // For non-student roles, create document with selected role
         console.log("Creating new user document with role:", loginMode);
         await setDoc(userRef, {
+          name: name || user.email.split('@')[0],
           email: user.email,
-          role: loginMode,
+          role: loginMode, // Use the selected login mode
           createdAt: new Date(),
         });
-        console.log("User document created successfully");
+        console.log("User document created successfully with role:", loginMode);
       } else {
-        // Verify role matches
+        // User document exists - just log it, don't verify role
         const userData = userDoc.data();
-        console.log("Existing user role:", userData.role, "Login mode:", loginMode);
-        if (userData.role !== loginMode) {
-          await auth.signOut();
-          setError(`This account is registered as ${userData.role}. Please select the correct login type.`);
-          return;
-        }
+        console.log("Existing user found - role:", userData.role, "Login mode:", loginMode);
+        // Don't sign out - let email-based detection in App.js handle the role
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -74,6 +79,12 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      // Block non-student signup via Google
+      if (loginMode !== "student") {
+        setError(`${loginMode.charAt(0).toUpperCase() + loginMode.slice(1)} accounts cannot be created through Google Sign-In. Please use email/password login with pre-created credentials.`);
+        return;
+      }
+
       const userCredential = await signInWithPopup(auth, googleProvider);
       const user = userCredential.user;
       
@@ -82,10 +93,11 @@ const Login = () => {
       const userDoc = await getDoc(userRef);
       
       if (!userDoc.exists()) {
-        // Create user document with role
+        // Create user document with role (only student allowed)
         await setDoc(userRef, {
+          name: user.displayName || user.email.split('@')[0], // Use Google display name or extract from email
           email: user.email,
-          role: loginMode,
+          role: "student", // Force student role for new Google sign-ins
           createdAt: new Date(),
         });
       } else {
@@ -112,22 +124,49 @@ const Login = () => {
         <h2 className="login-title">🎓 Grievance Cell</h2>
         <p className="login-subtitle">Sri Eshwar College of Engineering</p>
         
-        {/* Role Selection */}
-        <div className="role-selector">
-          <button
-            type="button"
-            className={`role-button ${loginMode === "student" ? "active" : ""}`}
-            onClick={() => setLoginMode("student")}
+        {/* Role Selection Dropdown */}
+        <div className="form-group">
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '8px', 
+            color: '#374151', 
+            fontWeight: '600',
+            fontSize: '0.95rem'
+          }}>
+            Select Your Role
+          </label>
+          <select
+            value={loginMode}
+            onChange={(e) => setLoginMode(e.target.value)}
+            className="form-input"
+            style={{
+              padding: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              background: 'white',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px'
+            }}
           >
-            👨‍🎓 Student Login
-          </button>
-          <button
-            type="button"
-            className={`role-button ${loginMode === "admin" ? "active" : ""}`}
-            onClick={() => setLoginMode("admin")}
-          >
-            👨‍💼 Admin Login
-          </button>
+            <option value="student">👨‍🎓 Student</option>
+            <option value="warden">🏠 Warden</option>
+            <option value="faculty">👨‍🏫 Faculty</option>
+            <option value="hod">👔 HOD</option>
+            <option value="admin">👨‍💼 Admin</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Your Name (optional)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="form-input"
+            style={{
+              background: 'rgba(59, 130, 246, 0.05)',
+              border: '2px solid rgba(59, 130, 246, 0.2)'
+            }}
+          />
         </div>
         <div className="form-group">
           <input
@@ -153,13 +192,53 @@ const Login = () => {
         <button type="submit" className="login-button">
           Log In
         </button>
-        <button
-          type="button"
-          onClick={() => setIsSignup(true)}
-          className="signup-link"
-        >
-          New Complainant? Sign Up Here
-        </button>
+        
+        {/* Only show signup button for students */}
+        {loginMode === "student" && (
+          <button
+            type="button"
+            onClick={() => setIsSignup(true)}
+            className="signup-link"
+            style={{
+              background: '#2563eb',
+              color: 'white',
+              fontWeight: '600',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              fontSize: '0.95rem',
+              marginTop: '0.5rem'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = '#1e4b9e';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = '#2563eb';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
+            }}
+          >
+            ✨ New Student? Sign Up Here
+          </button>
+        )}
+        
+        {/* Show message for staff roles */}
+        {loginMode !== "student" && (
+          <p style={{
+            textAlign: 'center',
+            color: '#6b7280',
+            fontSize: '0.9rem',
+            marginTop: '1rem',
+            fontStyle: 'italic'
+          }}>
+            {loginMode.charAt(0).toUpperCase() + loginMode.slice(1)} accounts must be pre-created by the system administrator.
+          </p>
+        )}
         <div className="divider">
           <div className="divider-line"></div>
           <span className="divider-text">or</span>

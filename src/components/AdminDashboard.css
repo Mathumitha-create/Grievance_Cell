@@ -551,7 +551,11 @@
   font-style: italic;
 }
 
-/* Responsive Design */
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* Tablet (1024px and below) */
 @media (max-width: 1024px) {
   .admin-dashboard-grid {
     grid-template-columns: 1fr;
@@ -560,24 +564,39 @@
   .recent-activity {
     grid-column: span 1;
   }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* Tablet (768px and below) */
 @media (max-width: 768px) {
   .sidebar {
-    width: 200px;
+    width: 100%;
+    height: auto;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .metrics-grid {
     grid-template-columns: 1fr;
   }
 
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .admin-card {
+    padding: 1.25rem;
+  }
+
   .action-btn {
     padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   .detail-row {
@@ -587,5 +606,247 @@
 
   .modal-content {
     width: 95%;
+    max-width: 95%;
+  }
+
+  .modal-header {
+    padding: 1.25rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-footer {
+    padding: 1.25rem;
+    flex-direction: column;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+
+  .action-buttons {
+    gap: 0.375rem;
+  }
+
+  .icon-btn {
+    font-size: 1.1rem;
+    padding: 0.4rem;
+  }
+
+  .category-list {
+    gap: 0.5rem;
+  }
+
+  .category-item-admin {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .recent-list {
+    gap: 0.5rem;
+  }
+
+  .recent-item {
+    padding: 0.875rem;
+  }
+
+  .recent-title {
+    font-size: 0.9rem;
+  }
+
+  .recent-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  .admin-card {
+    padding: 1rem;
+  }
+
+  .admin-card h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-left: 0.5rem;
+  }
+
+  .metric-item {
+    padding: 0.875rem;
+  }
+
+  .metric-label {
+    font-size: 0.8rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .category-name-admin {
+    font-size: 0.85rem;
+  }
+
+  .category-count-admin {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .recent-title {
+    font-size: 0.85rem;
+  }
+
+  .recent-meta {
+    font-size: 0.8rem;
+  }
+
+  .recent-status {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .action-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .modal-content {
+    padding: 0;
+    border-radius: 0.75rem;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .modal-close {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .detail-label {
+    font-size: 0.8rem;
+  }
+
+  .detail-value {
+    font-size: 0.9rem;
+  }
+
+  .modal-footer {
+    padding: 1rem;
+  }
+
+  .btn-danger,
+  .btn-secondary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .admin-info {
+    padding: 0.875rem;
+  }
+
+  .admin-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.5rem;
+  }
+
+  .admin-name {
+    font-size: 0.875rem;
+  }
+
+  .admin-email {
+    font-size: 0.7rem;
+  }
+
+  .header-title h1 {
+    font-size: 1.35rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .logout-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .status-select,
+  .status-select-modal {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Small mobile (360px and below) */
+@media (max-width: 360px) {
+  .admin-card {
+    padding: 0.875rem;
+  }
+
+  .admin-card h3 {
+    font-size: 0.95rem;
+  }
+
+  .metric-value {
+    font-size: 1.35rem;
+  }
+
+  .action-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-content {
+    max-height: 90vh;
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+  .action-btn,
+  .icon-btn,
+  .category-item-admin,
+  .recent-item {
+    min-height: 44px;
+  }
+
+  .icon-btn {
+    padding: 0.625rem;
+  }
+
+  .modal-close {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

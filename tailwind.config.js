@@ -1,5 +1,6 @@
 module.exports = {
-  purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
+  // Tailwind v3+ uses `content` instead of `purge`
+  content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   darkMode: false,
   theme: {
     extend: {

@@ -6,11 +6,12 @@ import { doc, setDoc } from "firebase/firestore";
 import "./login.css";
 
 const Signup = ({ onBackToLogin }) => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
-  const [role, setRole] = useState("student");
+  const role = "student"; // Fixed to student only - admins cannot signup
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -22,9 +23,9 @@ const Signup = ({ onBackToLogin }) => {
       return;
     }
 
-    // Validate admin email contains "admin"
-    if (role === "admin" && !email.toLowerCase().includes("admin")) {
-      setError("Admin accounts must contain 'admin' in the email (e.g., admin@sece.ac.in)");
+    // Prevent admin signup
+    if (email.toLowerCase().includes("admin")) {
+      setError("Admin accounts cannot be created through signup. Please contact system administrator.");
       return;
     }
 
@@ -47,6 +48,7 @@ const Signup = ({ onBackToLogin }) => {
       
       // Store user role in Firestore
       await setDoc(doc(db, "users", user.uid), {
+        name: name || user.email.split('@')[0], // Use provided name or extract from email
         email: user.email,
         role: role,
         createdAt: new Date(),
@@ -67,34 +69,37 @@ const Signup = ({ onBackToLogin }) => {
   return (
     <div className="login-container">
       <form onSubmit={handleSignup} className="login-card">
-        <h2 className="login-title">🎓 Sign Up</h2>
+        <h2 className="login-title">🎓 Student Sign Up</h2>
         <p className="login-subtitle">Sri Eshwar College of Engineering</p>
         <p className="email-domain-notice">
           Please use your @sece.ac.in email address
         </p>
-        
-        {/* Role Selection */}
-        <div className="role-selector">
-          <button
-            type="button"
-            className={`role-button ${role === "student" ? "active" : ""}`}
-            onClick={() => setRole("student")}
-          >
-            👨‍🎓 Student Account
-          </button>
-          <button
-            type="button"
-            className={`role-button ${role === "admin" ? "active" : ""}`}
-            onClick={() => setRole("admin")}
-          >
-            👨‍💼 Admin Account
-          </button>
-        </div>
+        <p className="info-notice" style={{ 
+          fontSize: '0.85rem', 
+          color: '#6b7280', 
+          marginBottom: '1rem',
+          textAlign: 'center'
+        }}>
+          Note: Admin accounts cannot be created through signup. Please contact the system administrator.
+        </p>
         
         <div className="form-group">
           <input
+            type="text"
+            placeholder="Your Name (optional)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="form-input"
+            style={{
+              background: 'rgba(59, 130, 246, 0.05)',
+              border: '2px solid rgba(59, 130, 246, 0.2)'
+            }}
+          />
+        </div>
+        <div className="form-group">
+          <input
             type="email"
-            placeholder={role === "admin" ? "admin@sece.ac.in" : "yourname@sece.ac.in"}
+            placeholder="yourname@sece.ac.in"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="form-input"

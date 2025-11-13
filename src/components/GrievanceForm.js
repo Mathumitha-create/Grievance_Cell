@@ -1,8 +1,12 @@
 // Reusable form for submitting grievances
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "../hooks/useTranslation";
+import TextToSpeech from "./TextToSpeech";
+import SpeechToText from "./SpeechToText";
 import "./Dashboard.css";
 
 const GrievanceForm = ({ onSubmit }) => {
+  const { t, currentLanguage } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -174,26 +178,50 @@ const GrievanceForm = ({ onSubmit }) => {
 
   return (
     <div className="form-container">
-      <h2>Submit New Grievance</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}>{t('submit_complaint')}</h2>
+        <TextToSpeech text={t('submit_complaint')} />
+      </div>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Title of Grievance *</label>
+          <label>{t('complaint_title_label')}</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Delayed Grade Submission for MATH 101"
+            placeholder={t('complaint_title')}
             required
             className="form-input"
           />
         </div>
 
         <div className="form-group">
-          <label>Detailed Description *</label>
+          <label>{t('complaint_description_label')}</label>
+          
+          {/* Speech-to-Text Input */}
+          <div style={{ marginBottom: '12px' }}>
+            <SpeechToText
+              onResult={(transcript) => {
+                // Append to description (or replace if empty)
+                setDescription(prev => prev ? `${prev} ${transcript}` : transcript);
+
+                // Show success feedback
+                const feedback = document.createElement("div");
+                feedback.textContent = `✅ Transcribed: "${transcript}"`;
+                feedback.className = "suggestion-feedback";
+                feedback.style.background = "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)";
+                document.body.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 3000);
+              }}
+              placeholder={`Speak in ${currentLanguage.toUpperCase()}...`}
+              className="speech-input-form"
+            />
+          </div>
+          
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Provide specific details, dates, and locations. Be thorough and factual."
+            placeholder={t('complaint_description')}
             required
             className="form-textarea"
             rows="4"
@@ -201,7 +229,7 @@ const GrievanceForm = ({ onSubmit }) => {
         </div>
 
         <div className="form-group">
-          <label>Category *</label>
+          <label>{t('category_label')}</label>
           <div className="category-section">
             <select
               value={category}
@@ -209,7 +237,7 @@ const GrievanceForm = ({ onSubmit }) => {
               required
               className="form-select"
             >
-              <option value="">Select Category</option>
+              <option value="">{t('select_category')}</option>
               {Object.keys(categoryKeywords).map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -222,20 +250,20 @@ const GrievanceForm = ({ onSubmit }) => {
               className="suggest-button"
               disabled={!canSuggest}
             >
-              Suggest Category ✨
+              {t('suggest_category')} ✨
             </button>
           </div>
         </div>
 
         <div className="form-group">
-          <label>Optional Image Proof</label>
+          <label>{t('attach_files')}</label>
           <input
             type="file"
             onChange={(e) => setAttachment(e.target.files[0])}
             accept="image/*"
             className="form-input"
           />
-          <small>Max size: 500KB. File will be uploaded to secure storage.</small>
+          <small>{t('max_file_size')}</small>
         </div>
 
         <button 
@@ -243,7 +271,7 @@ const GrievanceForm = ({ onSubmit }) => {
           className="submit-button"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Submitting..." : "Submit Grievance"}
+          {isSubmitting ? t('submitting') : t('submit_complaint')}
         </button>
       </form>
     </div>

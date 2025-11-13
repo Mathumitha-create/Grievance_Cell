@@ -14,12 +14,18 @@ import GrievanceForm from "./GrievanceForm";
 import { auth } from "../firebase";
 import { storage } from "../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useTranslation } from "../hooks/useTranslation";
+import TranslatedText from "./TranslatedText";
+import SpeakButton from "./SpeakButton";
+import TextToSpeech from "./TextToSpeech";
+import { useTranslatedText } from "../hooks/useTranslation";
 import "./Dashboard.css";
 
 const StudentDashboard = ({ user }) => {
   console.log("📚 STUDENT DASHBOARD loaded for:", user?.email);
   console.log("⚠️ If you expected ADMIN dashboard, your account role is 'student'");
   
+  const { t, currentLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState("summary");
   const [grievances, setGrievances] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -32,6 +38,12 @@ const StudentDashboard = ({ user }) => {
     open: 0,
     avgResolutionDays: 0,
   });
+
+  // Component for translated text with TTS
+  const TranslatedSpeakButton = ({ text }) => {
+    const { translatedText } = useTranslatedText(text);
+    return <SpeakButton text={translatedText} />;
+  };
 
   useEffect(() => {
     const q = query(
@@ -184,18 +196,21 @@ const StudentDashboard = ({ user }) => {
 
   const renderSummary = () => (
     <div className="dashboard-content">
-      <h2 className="page-title">Dashboard Overview</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <h2 className="page-title" style={{ margin: 0 }}>{t('dashboard')} {t('welcome')}</h2>
+        <TextToSpeech text={`${t('dashboard')} ${t('welcome')}`} />
+      </div>
       <div className="stats-grid">
         <div className="stat-card">
-          <h3>Total Cases (Mine)</h3>
+          <h3>{t('my_complaints')}</h3>
           <div className="stat-value">{stats.total}</div>
         </div>
         <div className="stat-card">
-          <h3>Resolved</h3>
+          <h3>{t('resolved_complaints')}</h3>
           <div className="stat-value">{stats.resolved}</div>
         </div>
         <div className="stat-card">
-          <h3>Open Cases</h3>
+          <h3>{t('pending_complaints')}</h3>
           <div className="stat-value">{stats.open}</div>
         </div>
         <div className="stat-card">
@@ -205,9 +220,9 @@ const StudentDashboard = ({ user }) => {
       </div>
 
       <div className="chart-section">
-        <h3>Grievance Breakdown</h3>
+        <h3>{t('statistics')}</h3>
         <div className="breakdown-info">
-          <h4>Most Common Category</h4>
+          <h4>{t('category')}</h4>
           <div>
             {Object.entries(
               grievances.reduce((acc, g) => {
@@ -226,20 +241,23 @@ const StudentDashboard = ({ user }) => {
   const renderMyGrievances = () => (
     <div className="grievances-list">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 className="page-title">My Submitted Grievances</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 className="page-title" style={{ margin: 0 }}>{t('my_complaints')}</h2>
+          <TextToSpeech text={t('my_complaints')} />
+        </div>
         <button 
           onClick={() => window.location.reload()} 
           className="filter-btn"
           style={{ marginLeft: 'auto' }}
         >
-          🔄 Refresh
+          🔄 {t('loading')}
         </button>
       </div>
       <div className="search-filters">
         <div className="search-box">
           <input
             type="text"
-            placeholder="Search by Title or Description..."
+            placeholder={t('search') + "..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -250,13 +268,13 @@ const StudentDashboard = ({ user }) => {
             className={`filter-btn ${!statusFilter && "active"}`}
             onClick={() => setStatusFilter("")}
           >
-            All
+            {t('all_complaints')}
           </button>
           <button
             className={`filter-btn ${statusFilter === "Pending" && "active"}`}
             onClick={() => setStatusFilter("Pending")}
           >
-            Open
+            {t('pending')}
           </button>
           <button
             className={`filter-btn ${
@@ -264,13 +282,13 @@ const StudentDashboard = ({ user }) => {
             }`}
             onClick={() => setStatusFilter("In Progress")}
           >
-            In Progress
+            {t('in_progress')}
           </button>
           <button
             className={`filter-btn ${statusFilter === "Resolved" && "active"}`}
             onClick={() => setStatusFilter("Resolved")}
           >
-            Resolved
+            {t('resolved')}
           </button>
           <button
             className={`filter-btn ${statusFilter === "Escalated" && "active"}`}
@@ -284,21 +302,24 @@ const StudentDashboard = ({ user }) => {
       <div className="grievance-table">
         <div className="table-header">
           <div>ID</div>
-          <div>Title</div>
-          <div>Category</div>
-          <div>Submitted On</div>
-          <div>Status</div>
+          <div>{t('title')}</div>
+          <div>{t('category')}</div>
+          <div>{t('date')}</div>
+          <div>{t('status')}</div>
         </div>
         {filteredGrievances.length === 0 ? (
           <div className="empty-state">
-            <p>No grievances found. {grievances.length === 0 ? "Submit your first grievance to get started!" : "Try adjusting your filters."}</p>
+            <p>{t('no_complaints')}</p>
           </div>
         ) : (
           filteredGrievances.map((g) => (
             <div key={g.id} className="table-row">
               <div>GR-{g.id.substring(0, 4)}</div>
-              <div>{g.title}</div>
-              <div>{g.category}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TranslatedText text={g.title} />
+                <TranslatedSpeakButton text={g.title} />
+              </div>
+              <div><TranslatedText text={g.category} /></div>
               <div>
                 {g.created_at?.toDate
                   ? g.created_at.toDate().toLocaleDateString()
@@ -306,7 +327,7 @@ const StudentDashboard = ({ user }) => {
               </div>
               <div>
                 <span className={`status-badge status-${g.status.toLowerCase()}`}>
-                  {g.status}
+                  <TranslatedText text={g.status} />
                 </span>
               </div>
             </div>
@@ -339,7 +360,7 @@ const StudentDashboard = ({ user }) => {
               >
                 <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
               </svg>
-              Dashboard
+              {t('dashboard')}
             </a>
           </li>
           <li className="sidebar-item">
@@ -360,7 +381,7 @@ const StudentDashboard = ({ user }) => {
               >
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
               </svg>
-              Submit Grievance
+              {t('submit_grievance')}
             </a>
           </li>
           <li className="sidebar-item">
@@ -381,17 +402,79 @@ const StudentDashboard = ({ user }) => {
               >
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
               </svg>
-              My Grievances
+              {t('my_grievances')}
             </a>
           </li>
         </ul>
       </div>
       <div className="main-content">
-        <div className="header">
-          <div className="user-profile">
-            <span>Logged in as: {user.email}</span>
-            <button onClick={() => auth.signOut()} className="filter-button">
-              Log Out
+        <div className="header" style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '24px 32px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ flex: 1 }}>
+              <h1 style={{
+                color: 'white',
+                fontSize: '1.8rem',
+                fontWeight: '700',
+                margin: '0 0 8px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                👋 {t('welcome')}!
+              </h1>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '1rem',
+                margin: '0 0 4px 0',
+                fontWeight: '500'
+              }}>
+                {user.email}
+              </p>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: '0.9rem',
+                margin: '0',
+                fontStyle: 'italic'
+              }}>
+                💬 {t('submit_grievance')} • {t('track_status')} • {t('get_help')}
+              </p>
+            </div>
+            <button 
+              onClick={() => auth.signOut()} 
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                padding: '10px 24px',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              🚪 {t('logout')}
             </button>
           </div>
         </div>
