@@ -1,13 +1,13 @@
 // Google Cloud Text-to-Speech API Service
-const GOOGLE_CLOUD_API_KEY = 'AIzaSyDMHRci1orRMvNhwwHz2jaCXrxs34AJqzE';
-const TTS_API_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
+const GOOGLE_CLOUD_API_KEY = process.env.REACT_APP_GOOGLE_CLOUD_API_KEY;
+const TTS_API_URL = "https://texttospeech.googleapis.com/v1/text:synthesize";
 
 // Voice configurations for different languages
 const VOICE_CONFIGS = {
-  en: { languageCode: 'en-US', name: 'en-US-Standard-A', ssmlGender: 'FEMALE' },
-  ta: { languageCode: 'ta-IN', name: 'ta-IN-Standard-A', ssmlGender: 'FEMALE' },
-  hi: { languageCode: 'hi-IN', name: 'hi-IN-Standard-A', ssmlGender: 'FEMALE' },
-  ml: { languageCode: 'ml-IN', name: 'ml-IN-Standard-A', ssmlGender: 'FEMALE' }
+  en: { languageCode: "en-US", name: "en-US-Standard-A", ssmlGender: "FEMALE" },
+  ta: { languageCode: "ta-IN", name: "ta-IN-Standard-A", ssmlGender: "FEMALE" },
+  hi: { languageCode: "hi-IN", name: "hi-IN-Standard-A", ssmlGender: "FEMALE" },
+  ml: { languageCode: "ml-IN", name: "ml-IN-Standard-A", ssmlGender: "FEMALE" },
 };
 
 /**
@@ -16,7 +16,7 @@ const VOICE_CONFIGS = {
  * @param {string} languageCode - Language code (en, ta, hi, ml)
  * @returns {Promise<void>} - Plays the audio
  */
-export const textToSpeech = async (text, languageCode = 'en') => {
+export const textToSpeech = async (text, languageCode = "en") => {
   try {
     const voiceConfig = VOICE_CONFIGS[languageCode] || VOICE_CONFIGS.en;
 
@@ -24,48 +24,50 @@ export const textToSpeech = async (text, languageCode = 'en') => {
       input: { text },
       voice: voiceConfig,
       audioConfig: {
-        audioEncoding: 'MP3',
+        audioEncoding: "MP3",
         pitch: 0,
-        speakingRate: 1.0
-      }
+        speakingRate: 1.0,
+      },
     };
 
     const response = await fetch(`${TTS_API_URL}?key=${GOOGLE_CLOUD_API_KEY}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('TTS API error:', errorData);
-      throw new Error(`Text-to-Speech failed: ${errorData.error?.message || 'Unknown error'}`);
+      console.error("TTS API error:", errorData);
+      throw new Error(
+        `Text-to-Speech failed: ${errorData.error?.message || "Unknown error"}`
+      );
     }
 
     const data = await response.json();
-    
+
     if (data.audioContent) {
       // Convert base64 audio to blob and play
-      const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
+      const audioBlob = base64ToBlob(data.audioContent, "audio/mp3");
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-      
+
       // Play the audio
       await audio.play();
-      
+
       // Clean up the URL after playing
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
       };
-      
+
       return audio;
     }
-    
-    throw new Error('No audio content returned');
+
+    throw new Error("No audio content returned");
   } catch (error) {
-    console.error('Text-to-Speech error:', error);
+    console.error("Text-to-Speech error:", error);
     throw error;
   }
 };
@@ -83,11 +85,11 @@ const base64ToBlob = (base64, contentType) => {
   for (let offset = 0; offset < byteCharacters.length; offset += 512) {
     const slice = byteCharacters.slice(offset, offset + 512);
     const byteNumbers = new Array(slice.length);
-    
+
     for (let i = 0; i < slice.length; i++) {
       byteNumbers[i] = slice.charCodeAt(i);
     }
-    
+
     const byteArray = new Uint8Array(byteNumbers);
     byteArrays.push(byteArray);
   }

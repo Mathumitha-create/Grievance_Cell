@@ -1,6 +1,7 @@
 // Google Cloud Translation API Service
-const GOOGLE_CLOUD_API_KEY = 'AIzaSyDMHRci1orRMvNhwwHz2jaCXrxs34AJqzE';
-const TRANSLATION_API_URL = 'https://translation.googleapis.com/language/translate/v2';
+const GOOGLE_CLOUD_API_KEY = process.env.REACT_APP_GOOGLE_CLOUD_API_KEY;
+const TRANSLATION_API_URL =
+  "https://translation.googleapis.com/language/translate/v2";
 
 /**
  * Translate text using Google Cloud Translation API
@@ -9,9 +10,13 @@ const TRANSLATION_API_URL = 'https://translation.googleapis.com/language/transla
  * @param {string} sourceLanguage - Source language code (optional, auto-detect if not provided)
  * @returns {Promise<string>} - Translated text
  */
-export const translateText = async (text, targetLanguage, sourceLanguage = null) => {
+export const translateText = async (
+  text,
+  targetLanguage,
+  sourceLanguage = null
+) => {
   // Don't translate if target is English and no source specified
-  if (targetLanguage === 'en' && !sourceLanguage) {
+  if (targetLanguage === "en" && !sourceLanguage) {
     return text;
   }
 
@@ -20,35 +25,44 @@ export const translateText = async (text, targetLanguage, sourceLanguage = null)
       key: GOOGLE_CLOUD_API_KEY,
       q: text,
       target: targetLanguage,
-      format: 'text'
+      format: "text",
     });
 
     if (sourceLanguage) {
-      params.append('source', sourceLanguage);
+      params.append("source", sourceLanguage);
     }
 
-    const response = await fetch(`${TRANSLATION_API_URL}?${params.toString()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${TRANSLATION_API_URL}?${params.toString()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Translation API error:', errorData);
-      throw new Error(`Translation failed: ${errorData.error?.message || 'Unknown error'}`);
+      console.error("Translation API error:", errorData);
+      throw new Error(
+        `Translation failed: ${errorData.error?.message || "Unknown error"}`
+      );
     }
 
     const data = await response.json();
-    
-    if (data.data && data.data.translations && data.data.translations.length > 0) {
+
+    if (
+      data.data &&
+      data.data.translations &&
+      data.data.translations.length > 0
+    ) {
       return data.data.translations[0].translatedText;
     }
-    
-    throw new Error('No translation returned');
+
+    throw new Error("No translation returned");
   } catch (error) {
-    console.error('Translation error:', error);
+    console.error("Translation error:", error);
     // Return original text if translation fails
     return text;
   }
@@ -61,8 +75,12 @@ export const translateText = async (text, targetLanguage, sourceLanguage = null)
  * @param {string} sourceLanguage - Source language code (optional)
  * @returns {Promise<string[]>} - Array of translated texts
  */
-export const translateBatch = async (texts, targetLanguage, sourceLanguage = null) => {
-  if (targetLanguage === 'en' && !sourceLanguage) {
+export const translateBatch = async (
+  texts,
+  targetLanguage,
+  sourceLanguage = null
+) => {
+  if (targetLanguage === "en" && !sourceLanguage) {
     return texts;
   }
 
@@ -70,40 +88,47 @@ export const translateBatch = async (texts, targetLanguage, sourceLanguage = nul
     const params = new URLSearchParams({
       key: GOOGLE_CLOUD_API_KEY,
       target: targetLanguage,
-      format: 'text'
+      format: "text",
     });
 
     if (sourceLanguage) {
-      params.append('source', sourceLanguage);
+      params.append("source", sourceLanguage);
     }
 
     // Add all texts as separate 'q' parameters
-    texts.forEach(text => {
-      params.append('q', text);
+    texts.forEach((text) => {
+      params.append("q", text);
     });
 
-    const response = await fetch(`${TRANSLATION_API_URL}?${params.toString()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${TRANSLATION_API_URL}?${params.toString()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Batch translation API error:', errorData);
-      throw new Error(`Batch translation failed: ${errorData.error?.message || 'Unknown error'}`);
+      console.error("Batch translation API error:", errorData);
+      throw new Error(
+        `Batch translation failed: ${
+          errorData.error?.message || "Unknown error"
+        }`
+      );
     }
 
     const data = await response.json();
-    
+
     if (data.data && data.data.translations) {
-      return data.data.translations.map(t => t.translatedText);
+      return data.data.translations.map((t) => t.translatedText);
     }
-    
-    throw new Error('No translations returned');
+
+    throw new Error("No translations returned");
   } catch (error) {
-    console.error('Batch translation error:', error);
+    console.error("Batch translation error:", error);
     // Return original texts if translation fails
     return texts;
   }
@@ -118,30 +143,33 @@ export const detectLanguage = async (text) => {
   try {
     const params = new URLSearchParams({
       key: GOOGLE_CLOUD_API_KEY,
-      q: text
+      q: text,
     });
 
-    const response = await fetch(`https://translation.googleapis.com/language/translate/v2/detect?${params.toString()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `https://translation.googleapis.com/language/translate/v2/detect?${params.toString()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     if (!response.ok) {
-      throw new Error('Language detection failed');
+      throw new Error("Language detection failed");
     }
 
     const data = await response.json();
-    
+
     if (data.data && data.data.detections && data.data.detections.length > 0) {
       return data.data.detections[0][0].language;
     }
-    
-    return 'en'; // Default to English
+
+    return "en"; // Default to English
   } catch (error) {
-    console.error('Language detection error:', error);
-    return 'en';
+    console.error("Language detection error:", error);
+    return "en";
   }
 };
 
@@ -150,50 +178,55 @@ export const detectLanguage = async (text) => {
  * @param {string} targetLanguage - Language code to display language names in (default: 'en')
  * @returns {Promise<Array>} - Array of language objects with code and name
  */
-export const getSupportedLanguages = async (targetLanguage = 'en') => {
+export const getSupportedLanguages = async (targetLanguage = "en") => {
   try {
     const params = new URLSearchParams({
       key: GOOGLE_CLOUD_API_KEY,
-      target: targetLanguage
+      target: targetLanguage,
     });
 
     const url = `https://translation.googleapis.com/language/translate/v2/languages?${params.toString()}`;
-    console.log('📡 Fetching languages from:', url.replace(GOOGLE_CLOUD_API_KEY, 'API_KEY_HIDDEN'));
+    console.log(
+      "📡 Fetching languages from:",
+      url.replace(GOOGLE_CLOUD_API_KEY, "API_KEY_HIDDEN")
+    );
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-      }
+        "Content-Type": "application/json",
+      },
     });
 
-    console.log('📡 Response status:', response.status, response.statusText);
+    console.log("📡 Response status:", response.status, response.statusText);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('❌ API Error Response:', errorData);
-      throw new Error(`Failed to fetch languages: ${response.status} ${response.statusText}`);
+      console.error("❌ API Error Response:", errorData);
+      throw new Error(
+        `Failed to fetch languages: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
-    console.log('📦 API Response data:', data);
-    
+    console.log("📦 API Response data:", data);
+
     if (data.data && data.data.languages) {
-      const languages = data.data.languages.map(lang => ({
+      const languages = data.data.languages.map((lang) => ({
         code: lang.language,
-        name: lang.name
+        name: lang.name,
       }));
-      console.log('✅ Successfully parsed', languages.length, 'languages');
+      console.log("✅ Successfully parsed", languages.length, "languages");
       return languages;
     }
-    
-    console.warn('⚠️ No languages in response data');
+
+    console.warn("⚠️ No languages in response data");
     return [];
   } catch (error) {
-    console.error('❌ Error fetching supported languages:', error);
-    console.error('Error details:', {
+    console.error("❌ Error fetching supported languages:", error);
+    console.error("Error details:", {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     return [];
   }
